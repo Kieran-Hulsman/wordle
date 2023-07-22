@@ -57,10 +57,10 @@ def isValidGuess (guess: str) -> bool:
         if letter in gray: return False
 
     # yellow set (guess must contain yellow letters)
-    if len(yellow_set) > 0:
+    for yellow_letter in yellow_set:
         isValid = False
-        for letter in guess:
-            if letter in yellow_set: 
+        for guess_letter in guess:
+            if yellow_letter == guess_letter:
                 isValid = True
         if not isValid: return False
     
@@ -91,16 +91,6 @@ def check_win_conditions (feedback: str, guess: str) -> None:
 
 def lose_conditions () -> None:
     print("sad sad. we lost :(")
-
-def main ():
-    init_filter()
-    get_word_list()
-    for i in range(6):
-        guess = get_guess()
-        feedback = get_feedback(guess)
-        check_win_conditions(feedback, guess)
-        update_filter(feedback, guess)
-    lose_conditions()
 
 # testing
 def TEST_isFirstGuess ():
@@ -186,6 +176,11 @@ def TEST_isValidGuess ():
     assert(isValidGuess("froze"))
     init_filter()
 
+    update_filter("xxxyx", "adieu")
+    update_filter("xyxyx", "bebop")
+    assert(not isValidGuess("check"))
+    init_filter()
+
 def TEST_get_guess ():
     get_word_list()
     assert(get_guess() == INITIAL_GUESS)
@@ -206,5 +201,39 @@ def TEST_check_win_conditions ():
 def TEST_lose_conditions():
     lose_conditions()
 
+def report_filter_status ():
+    gray_list = list(gray)
+    gray_list.sort()
+    yellow_list = list(yellow_set)
+    yellow_list.sort()
+    
+    print("\n---FILTER STATUS START---")
+    print("green: {}".format(green))
+
+    print("yellow set: {}".format(yellow_list))
+    print("yellow indexed: {}".format(yellow_indexed))
+
+    print("gray: {}".format(gray_list))
+    print("---FILTER STATUS END  ---\n")
+
+# control centre
+def test ():
+    init_filter()
+    get_word_list()
+
+    ### TESTS HERE ###
+    TEST_isValidGuess()
+
+def main ():
+    init_filter()
+    get_word_list()
+    for i in range(6):
+        guess = get_guess()
+        feedback = get_feedback(guess)
+        check_win_conditions(feedback, guess)
+        update_filter(feedback, guess)
+        report_filter_status()
+    lose_conditions()
+
 if __name__=="__main__":
-    main()
+    test()
