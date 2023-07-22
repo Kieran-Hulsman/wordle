@@ -232,8 +232,7 @@ def main ():
         feedback = get_feedback(guess)
         check_win_conditions(feedback, guess)
         update_filter(feedback, guess)
-        report_filter_status()
     lose_conditions()
 
 if __name__=="__main__":
-    test()
+    main()
