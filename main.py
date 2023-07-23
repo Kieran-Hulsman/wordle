@@ -84,12 +84,14 @@ def get_feedback (guess: str) -> str:
     feedback = input("feedback: ")
     return feedback
 
-def check_win_conditions (feedback: str, guess: str) -> None:
-    if feedback == "ggggg":
-        print("WINNER WINNER CHICKEN DINNER! the wordle is: {}".format(guess))
-        exit(0)
+def isWin (feedback: str) -> bool:
+    return feedback == "ggggg"
 
-def lose_conditions () -> None:
+def report_win (answer: str) -> None:
+    print("WINNER WINNER CHICKEN DINNER! the wordle is: {}".format(answer))
+    exit(0)
+
+def report_loss () -> None:
     print("sad sad. we lost :(")
 
 # testing
@@ -192,14 +194,12 @@ def TEST_get_feedback ():
     feedback = get_feedback(INITIAL_GUESS)
     print("\n\nTEST result: {}".format(feedback))
 
-def TEST_check_win_conditions ():
-    check_win_conditions("ggggy", "abcde")
-    print("TEST line, you should see")
-    check_win_conditions("ggggg", "abcde")
-    assert(0)
+def TEST_isWin ():
+    assert(not isWin("ggggy"))
+    assert(isWin("ggggg"))
 
-def TEST_lose_conditions():
-    lose_conditions()
+def TEST_report_loss():
+    report_loss()
 
 def report_filter_status ():
     gray_list = list(gray)
@@ -216,6 +216,88 @@ def report_filter_status ():
     print("gray: {}".format(gray_list))
     print("---FILTER STATUS END  ---\n")
 
+# reports efficacy of the bot, used for comparing subsequent versions
+class Evaluation:
+    UNINITIALIZED_VALUE = -1
+    def __init__ (self):
+        self.min_score = self.UNINITIALIZED_VALUE
+        self.max_score = self.UNINITIALIZED_VALUE
+        self.total_guesses = 0
+        self.num_words = 0
+
+    def get_avg (self) -> float:
+        return self.total_guesses / self.num_words
+    
+    def get_automated_feedback (self, guess: str, ans: str) -> str:
+        feedback = "-----"
+        ans_set = set(ans)
+        for i,c in enumerate(guess):
+            if c == ans[i]: feedback[i] = 'g'
+            elif c in ans_set: feedback[i] = 'y'
+            else: feedback[i] = 'x'
+        return feedback
+    
+    def get_wordle_score (self, ans: str) -> int:
+        init_filter()
+        for i in range(1000):
+            guess = get_guess()
+            feedback = self.get_automated_feedback(guess, ans)
+            if isWin(feedback): return i+1
+            update_filter(feedback, guess)
+        exit(1)
+
+    def generate_evaluation (self, word_list: list) -> None:
+        # get_word_list() # remove for testing
+        for word in word_list:
+            score = self.get_wordle_score(word)
+            if self.min_score==self.UNINITIALIZED_VALUE or score < self.min_score:
+                self.min_score = score
+            if self.max_score==self.UNINITIALIZED_VALUE or score > self.max_score:
+                self.max_score = score
+            self.total_guesses += score
+            self.num_words += 1
+        
+    def TEST_init (self):
+        obj = Evaluation()
+        assert(obj.min_score == self.UNINITIALIZED_VALUE)
+        assert(obj.max_score == self.UNINITIALIZED_VALUE)
+        assert(obj.total_guesses == 0)
+        assert(obj.num_words == 0)
+
+    def TEST_get_avg (self):
+        NUMERATOR = 5
+        DENOMINATOR = 7
+        ACCEPTABLE_ERR = 0.0001
+        obj = Evaluation()
+        obj.total_guesses = NUMERATOR
+        obj.num_words = DENOMINATOR
+        assert(abs(obj.get_avg - NUMERATOR/DENOMINATOR) < ACCEPTABLE_ERR)
+    
+    def TEST_get_automated_feedback (self):
+        obj = Evaluation()
+        assert(obj.get_automated_feedback(guess="abcde", ans="fghij") == "xxxxx")
+        assert(obj.get_automated_feedback(guess="abcde", ans="abcde") == "ggggg")
+        assert(obj.get_automated_feedback(guess="abcde", ans="baced") == "yyyyy")
+        assert(obj.get_automated_feedback(guess="abcde", ans="aczzz") == "gyxxx")
+    
+    def TEST_get_wordle_score (self):
+        obj = Evaluation()
+
+        # these tests only word for current iteration (version 1.0)
+        assert(obj.get_wordle_score("zymic") == 6)
+        assert(obj.get_wordle_score("whale") == 6)
+    
+    def TEST_generate_evaluation (self):
+        # won't work with generate_evaluation function that's released to prod
+        # will only work with version 1.0
+        TEST_WORD_LIST = ["whale", "zymic", "earth"]
+        obj = Evaluation()
+        obj.generate_evaluation()
+        assert(obj.min_score == 5)
+        assert(obj.max_score == 6)
+        assert(obj.total_guesses == 6 + 6 + 5)
+        assert(obj.num_words == len(TEST_WORD_LIST))
+
 # control centre
 def test ():
     init_filter()
@@ -230,9 +312,9 @@ def main ():
     for i in range(6):
         guess = get_guess()
         feedback = get_feedback(guess)
-        check_win_conditions(feedback, guess)
+        if isWin(feedback): report_win(guess)
         update_filter(feedback, guess)
-    lose_conditions()
+    report_loss()
 
 if __name__=="__main__":
     main()
