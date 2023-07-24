@@ -224,18 +224,19 @@ class Evaluation:
         self.max_score = self.UNINITIALIZED_VALUE
         self.total_guesses = 0
         self.num_words = 0
+        get_word_list()
 
     def get_avg (self) -> float:
-        return self.total_guesses / self.num_words
+        return round(self.total_guesses / self.num_words, 2)
     
     def get_automated_feedback (self, guess: str, ans: str) -> str:
-        feedback = "-----"
+        res = ""
         ans_set = set(ans)
         for i,c in enumerate(guess):
-            if c == ans[i]: feedback[i] = 'g'
-            elif c in ans_set: feedback[i] = 'y'
-            else: feedback[i] = 'x'
-        return feedback
+            if c == ans[i]: res += 'g'
+            elif c in ans_set: res += 'y'
+            else: res += 'x'
+        return res
     
     def get_wordle_score (self, ans: str) -> int:
         init_filter()
@@ -246,9 +247,9 @@ class Evaluation:
             update_filter(feedback, guess)
         exit(1)
 
-    def generate_evaluation (self, word_list: list) -> None:
-        # get_word_list() # remove for testing
-        for word in word_list:
+    def generate_evaluation (self) -> None:
+        for i,word in enumerate(word_list):
+            print(i) # testing
             score = self.get_wordle_score(word)
             if self.min_score==self.UNINITIALIZED_VALUE or score < self.min_score:
                 self.min_score = score
@@ -256,7 +257,15 @@ class Evaluation:
                 self.max_score = score
             self.total_guesses += score
             self.num_words += 1
-        
+    
+    def report_evaluation (self) -> None:
+        # eval must be generated in order for this function to work
+        print("---WORDLE BOT VERSION EVALUATION REPORT---")
+        print("min score: {}".format(self.min_score))
+        print("max score: {}".format(self.max_score))
+        print("avg score: {}".format(self.get_avg()))
+        print("---WORDLE BOT VERSION EVALUATION REPORT---")
+
     def TEST_init (self):
         obj = Evaluation()
         assert(obj.min_score == self.UNINITIALIZED_VALUE)
@@ -271,16 +280,17 @@ class Evaluation:
         obj = Evaluation()
         obj.total_guesses = NUMERATOR
         obj.num_words = DENOMINATOR
-        assert(abs(obj.get_avg - NUMERATOR/DENOMINATOR) < ACCEPTABLE_ERR)
+        assert(abs(obj.get_avg() - NUMERATOR/DENOMINATOR) < ACCEPTABLE_ERR)
     
     def TEST_get_automated_feedback (self):
         obj = Evaluation()
         assert(obj.get_automated_feedback(guess="abcde", ans="fghij") == "xxxxx")
         assert(obj.get_automated_feedback(guess="abcde", ans="abcde") == "ggggg")
-        assert(obj.get_automated_feedback(guess="abcde", ans="baced") == "yyyyy")
-        assert(obj.get_automated_feedback(guess="abcde", ans="aczzz") == "gyxxx")
+        assert(obj.get_automated_feedback(guess="abcde", ans="baecd") == "yyyyy")
+        assert(obj.get_automated_feedback(guess="abcde", ans="aczzz") == "gxyxx")
     
     def TEST_get_wordle_score (self):
+        get_word_list()
         obj = Evaluation()
 
         # these tests only word for current iteration (version 1.0)
@@ -290,13 +300,21 @@ class Evaluation:
     def TEST_generate_evaluation (self):
         # won't work with generate_evaluation function that's released to prod
         # will only work with version 1.0
+        get_word_list() # main algorithm functions rely on this being generated, does not affect test
         TEST_WORD_LIST = ["whale", "zymic", "earth"]
         obj = Evaluation()
-        obj.generate_evaluation()
+        obj.generate_evaluation(TEST_WORD_LIST)
         assert(obj.min_score == 5)
         assert(obj.max_score == 6)
         assert(obj.total_guesses == 6 + 6 + 5)
         assert(obj.num_words == len(TEST_WORD_LIST))
+
+    def run_tests (self):
+        self.TEST_init()
+        self.TEST_get_avg()
+        self.TEST_get_automated_feedback()
+        self.TEST_get_wordle_score()
+        self.TEST_generate_evaluation()
 
 # control centre
 def test ():
@@ -317,4 +335,6 @@ def main ():
     report_loss()
 
 if __name__=="__main__":
-    main()
+    eval = Evaluation()
+    eval.generate_evaluation()
+    eval.report_evaluation()

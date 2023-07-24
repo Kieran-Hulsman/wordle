@@ -1,0 +1,5 @@
+version 1.0
+
+min score: 1
+max score: 19
+avg score: 5.55
