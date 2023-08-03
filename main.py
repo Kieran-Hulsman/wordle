@@ -1,5 +1,7 @@
 # kieran hulsman
 # wordle solver
+# version 2.0 - updating algo
+
 word_list = [] # from text file
 INITIAL_GUESS = "adieu"
 def init_filter ():
@@ -95,111 +97,116 @@ def report_loss () -> None:
     print("sad sad. we lost :(")
 
 # testing
-def TEST_isFirstGuess ():
-    assert(isFirstGuess())
-    
-    gray.add('a')
-    assert(not isFirstGuess())
-    init_filter()
+class Test ():
+    def __init__ (self):
+        init_filter()
+        get_word_list()
 
-    green[4] = 'a'
-    assert(not isFirstGuess())
-    init_filter()
+    def isFirstGuess (self):
+        assert(isFirstGuess())
+        
+        gray.add('a')
+        assert(not isFirstGuess())
+        init_filter()
 
-    yellow_set.add('a')
-    assert(not isFirstGuess())
+        green[4] = 'a'
+        assert(not isFirstGuess())
+        init_filter()
 
-def TEST_get_word_list ():
-    get_word_list()
-    for word in word_list:
-        print(word)
-    
-def TEST_isValidGuess ():
-    pass
+        yellow_set.add('a')
+        assert(not isFirstGuess())
 
-def TEST_update_filter ():
+    def get_word_list (self):
+        get_word_list()
+        for word in word_list:
+            print(word)
+        
+    def isValidGuess (self):
+        pass
 
-    update_filter("xxxxx", "abcde")
-    assert('a' in gray)
-    assert('b' in gray)
-    assert('c' in gray)
-    assert('d' in gray)
-    assert('e' in gray)
-    init_filter()
+    def update_filter (self):
 
-    update_filter("yyyyy", "abcde")
-    assert('a' in yellow_set)
-    assert('b' in yellow_set)
-    assert('c' in yellow_set)
-    assert('d' in yellow_set)
-    assert('e' in yellow_set)
-    assert(len(yellow_indexed[0])==1 and yellow_indexed[0][0]=='a')
-    assert(len(yellow_indexed[1])==1 and yellow_indexed[1][0]=='b')
-    assert(len(yellow_indexed[2])==1 and yellow_indexed[2][0]=='c')
-    assert(len(yellow_indexed[3])==1 and yellow_indexed[3][0]=='d')
-    assert(len(yellow_indexed[4])==1 and yellow_indexed[4][0]=='e')
-    init_filter()
+        update_filter("xxxxx", "abcde")
+        assert('a' in gray)
+        assert('b' in gray)
+        assert('c' in gray)
+        assert('d' in gray)
+        assert('e' in gray)
+        init_filter()
 
-    update_filter("ggggg", "abcde")
-    assert(green[0]=='a')
-    assert(green[1]=='b')
-    assert(green[2]=='c')
-    assert(green[3]=='d')
-    assert(green[4]=='e')
-    init_filter()
+        update_filter("yyyyy", "abcde")
+        assert('a' in yellow_set)
+        assert('b' in yellow_set)
+        assert('c' in yellow_set)
+        assert('d' in yellow_set)
+        assert('e' in yellow_set)
+        assert(len(yellow_indexed[0])==1 and yellow_indexed[0][0]=='a')
+        assert(len(yellow_indexed[1])==1 and yellow_indexed[1][0]=='b')
+        assert(len(yellow_indexed[2])==1 and yellow_indexed[2][0]=='c')
+        assert(len(yellow_indexed[3])==1 and yellow_indexed[3][0]=='d')
+        assert(len(yellow_indexed[4])==1 and yellow_indexed[4][0]=='e')
+        init_filter()
 
-    update_filter("xxygx", "abcde")
-    assert('a' in gray)
-    assert('b' in gray)
-    assert('c' in yellow_set)
-    assert(len(yellow_indexed[2])==1 and yellow_indexed[2][0]=='c')
-    assert(green[3]=='d')
-    assert('e' in gray)
-    init_filter()
+        update_filter("ggggg", "abcde")
+        assert(green[0]=='a')
+        assert(green[1]=='b')
+        assert(green[2]=='c')
+        assert(green[3]=='d')
+        assert(green[4]=='e')
+        init_filter()
 
-def TEST_isValidGuess ():
-    update_filter("xxxxx", "abcde")
-    assert(not isValidGuess("abcde"))
-    init_filter()
+        update_filter("xxygx", "abcde")
+        assert('a' in gray)
+        assert('b' in gray)
+        assert('c' in yellow_set)
+        assert(len(yellow_indexed[2])==1 and yellow_indexed[2][0]=='c')
+        assert(green[3]=='d')
+        assert('e' in gray)
+        init_filter()
 
-    update_filter("gxxxx", "abcde")
-    assert(not isValidGuess("zzzzz"))
-    assert(isValidGuess("azzzz"))
-    init_filter()
+    def isValidGuess (self):
+        update_filter("xxxxx", "abcde")
+        assert(not isValidGuess("abcde"))
+        init_filter()
 
-    update_filter("yxxxx", "abcde")
-    assert(not isValidGuess("azzzz"))
-    assert(not isValidGuess("zzzzz"))
-    assert(isValidGuess("zazzz"))
-    init_filter()
+        update_filter("gxxxx", "abcde")
+        assert(not isValidGuess("zzzzz"))
+        assert(isValidGuess("azzzz"))
+        init_filter()
 
-    update_filter("xxxyx", "adieu")
-    assert(not isValidGuess("louse"))
-    assert(isValidGuess("froze"))
-    init_filter()
+        update_filter("yxxxx", "abcde")
+        assert(not isValidGuess("azzzz"))
+        assert(not isValidGuess("zzzzz"))
+        assert(isValidGuess("zazzz"))
+        init_filter()
 
-    update_filter("xxxyx", "adieu")
-    update_filter("xyxyx", "bebop")
-    assert(not isValidGuess("check"))
-    init_filter()
+        update_filter("xxxyx", "adieu")
+        assert(not isValidGuess("louse"))
+        assert(isValidGuess("froze"))
+        init_filter()
 
-def TEST_get_guess ():
-    get_word_list()
-    assert(get_guess() == INITIAL_GUESS)
-    update_filter("xxxyx", INITIAL_GUESS)
-    print(get_guess())
-    init_filter()
+        update_filter("xxxyx", "adieu")
+        update_filter("xyxyx", "bebop")
+        assert(not isValidGuess("check"))
+        init_filter()
 
-def TEST_get_feedback ():
-    feedback = get_feedback(INITIAL_GUESS)
-    print("\n\nTEST result: {}".format(feedback))
+    def get_guess (self):
+        get_word_list()
+        assert(get_guess() == INITIAL_GUESS)
+        update_filter("xxxyx", INITIAL_GUESS)
+        print(get_guess())
+        init_filter()
 
-def TEST_isWin ():
-    assert(not isWin("ggggy"))
-    assert(isWin("ggggg"))
+    def get_feedback (self):
+        feedback = get_feedback(INITIAL_GUESS)
+        print("\n\nTEST result: {}".format(feedback))
 
-def TEST_report_loss():
-    report_loss()
+    def isWin (self):
+        assert(not isWin("ggggy"))
+        assert(isWin("ggggg"))
+
+    def report_loss(self):
+        report_loss()
 
 def report_filter_status ():
     gray_list = list(gray)
@@ -316,14 +323,6 @@ class Evaluation:
         self.TEST_get_wordle_score()
         self.TEST_generate_evaluation()
 
-# control centre
-def test ():
-    init_filter()
-    get_word_list()
-
-    ### TESTS HERE ###
-    TEST_isValidGuess()
-
 def main ():
     init_filter()
     get_word_list()
@@ -335,6 +334,5 @@ def main ():
     report_loss()
 
 if __name__=="__main__":
-    eval = Evaluation()
-    eval.generate_evaluation()
-    eval.report_evaluation()
+    test = Test ()
+    test.update_filter()
