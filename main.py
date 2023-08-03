@@ -81,6 +81,12 @@ def get_guess () -> str:
 
     exit(1)
 
+def get_number_valid_words () -> int:
+    res = 0
+    for word in word_list:
+        if isValidGuess(word): res += 1
+    return res
+
 def get_feedback (guess: str) -> str:
     print("guess: {}".format(guess))
     feedback = input("feedback: ")
@@ -334,5 +340,6 @@ def main ():
     report_loss()
 
 if __name__=="__main__":
-    test = Test ()
-    test.update_filter()
+    init_filter()
+    get_word_list()
+    print(get_number_valid_words())
