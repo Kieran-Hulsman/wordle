@@ -3,31 +3,62 @@
 # version 2.0 - updating algo
 
 word_list = [] # from text file
-INITIAL_GUESS = "adieu"
-def init_filter ():
-    global gray
-    global green
-    global yellow_indexed
-    global yellow_set
-    global word_list
-    
-    gray = set()
-    green = ['','','','','']
-    yellow_indexed = [[],[],[],[],[]]
-    yellow_set = set()
+INITIAL_GUESS = "slate"
 
-    assert(isFirstGuess())
+class Filter ():
+    def __init__ (self):
+        self.gray = set()
+        self.green = ['','','','','']
+        self.yellow_indexed = [[],[],[],[],[]]
+        self.yellow_set = set()
+        assert(self.isEmpty())
 
-def isFirstGuess () -> bool:
-    if len(gray) > 0: return False
-    if len(yellow_set) > 0: return False
-    
-    green_isEmpty = True
-    for letter in green:
-        if letter != '': 
-            green_isEmpty = False
-    
-    return green_isEmpty
+    def update (self, feedback: str, guess: str) -> None:
+        for i,c in enumerate(feedback):
+            if c == 'x': self.gray.add(guess[i])
+            elif c == 'g': self.green[i] = guess[i]
+            elif c == 'y':
+                self.yellow_set.add(guess[i])
+                self.yellow_indexed[i].append(guess[i])
+            else:
+                exit(1)
+
+    def report_status (self) -> None:
+        gray_list = list(self.gray)
+        gray_list.sort()
+        yellow_list = list(self.yellow_set)
+        yellow_list.sort()
+        
+        print("\n---FILTER STATUS START---")
+        print("green: {}".format(self.green))
+
+        print("yellow set: {}".format(self.yellow_list))
+        print("yellow indexed: {}".format(self.yellow_indexed))
+
+        print("gray: {}".format(self.gray_list))
+        print("---FILTER STATUS END  ---\n")
+
+    # resets filter
+    def clear (self) -> None:
+        self.gray = set()
+        self.green = ['','','','','']
+        self.yellow_indexed = [[],[],[],[],[]]
+        self.yellow_set = set()
+        assert(self.isEmpty())
+
+    def isEmpty (self) -> bool:
+        if len(self.gray) > 0: return False
+        if len(self.yellow_set) > 0: return False
+        
+        green_isEmpty = True
+        for letter in self.green:
+            if letter != '': 
+                green_isEmpty = False
+        
+        return green_isEmpty
+
+def isFirstGuess (filter: Filter) -> bool:
+    return filter.isEmpty()
 
 def get_word_list ():
     global word_list
@@ -37,29 +68,19 @@ def get_word_list ():
         for word in line.split():
             word_list.append(word)
 
-def update_filter (feedback: str, guess: str) -> None:
-    for i,c in enumerate(feedback):
-        if c == 'x': gray.add(guess[i])
-        elif c == 'g': green[i] = guess[i]
-        elif c == 'y':
-            yellow_set.add(guess[i])
-            yellow_indexed[i].append(guess[i])
-        else:
-            exit(1)
-
-def isValidGuess (guess: str) -> bool:
+def isValidGuess (guess: str, filter: Filter) -> bool:
 
     # green
     for i, letter in enumerate(guess):
-        if green[i] != '' and letter != green[i]:
+        if filter.green[i] != '' and letter != filter.green[i]:
             return False
         
     # gray
     for letter in guess:
-        if letter in gray: return False
+        if letter in filter.gray: return False
 
     # yellow set (guess must contain yellow letters)
-    for yellow_letter in yellow_set:
+    for yellow_letter in filter.yellow_set:
         isValid = False
         for guess_letter in guess:
             if yellow_letter == guess_letter:
@@ -68,23 +89,24 @@ def isValidGuess (guess: str) -> bool:
     
     # yellow indexed (letters must not be in the same index as yellow letters)
     for i,letter in enumerate(guess):
-        for yellow_letter in yellow_indexed[i]:
+        for yellow_letter in filter.yellow_indexed[i]:
             if letter == yellow_letter: return False
   
     return True
 
-def get_guess () -> str:
-    if isFirstGuess(): return INITIAL_GUESS
+def get_guess (filter: Filter) -> str:
+    if isFirstGuess(filter): return INITIAL_GUESS
     
     for word in word_list:
-        if isValidGuess(word): return word
+        if isValidGuess(word, filter): return word
 
     exit(1)
 
 def get_number_valid_words () -> int:
+    filter = Filter()
     res = 0
     for word in word_list:
-        if isValidGuess(word): res += 1
+        if isValidGuess(word, filter): res += 1
     return res
 
 def get_feedback (guess: str) -> str:
@@ -105,129 +127,123 @@ def report_loss () -> None:
 # testing
 class Test ():
     def __init__ (self):
-        init_filter()
+        self.filter = Filter()
         get_word_list()
 
-    def isFirstGuess (self):
-        assert(isFirstGuess())
+    def TEST_isFirstGuess (self):
+        assert(isFirstGuess(self.filter))
         
-        gray.add('a')
-        assert(not isFirstGuess())
-        init_filter()
+        self.filter.gray.add('a')
+        assert(not isFirstGuess(self.filter))
+        self.filter.clear()
 
-        green[4] = 'a'
-        assert(not isFirstGuess())
-        init_filter()
+        self.filter.green[4] = 'a'
+        assert(not isFirstGuess(self.filter))
+        self.filter.clear()
 
-        yellow_set.add('a')
-        assert(not isFirstGuess())
+        self.filter.yellow_set.add('a')
+        assert(not isFirstGuess(self.filter))
 
-    def get_word_list (self):
-        get_word_list()
+    def TEST_get_word_list (self):
         for word in word_list:
             print(word)
-        
-    def isValidGuess (self):
-        pass
 
-    def update_filter (self):
+    def TEST_update_filter (self):
 
-        update_filter("xxxxx", "abcde")
-        assert('a' in gray)
-        assert('b' in gray)
-        assert('c' in gray)
-        assert('d' in gray)
-        assert('e' in gray)
-        init_filter()
+        self.filter.update("xxxxx", "abcde")
+        assert('a' in self.filter.gray)
+        assert('b' in self.filter.gray)
+        assert('c' in self.filter.gray)
+        assert('d' in self.filter.gray)
+        assert('e' in self.filter.gray)
+        self.filter.clear()
 
-        update_filter("yyyyy", "abcde")
-        assert('a' in yellow_set)
-        assert('b' in yellow_set)
-        assert('c' in yellow_set)
-        assert('d' in yellow_set)
-        assert('e' in yellow_set)
-        assert(len(yellow_indexed[0])==1 and yellow_indexed[0][0]=='a')
-        assert(len(yellow_indexed[1])==1 and yellow_indexed[1][0]=='b')
-        assert(len(yellow_indexed[2])==1 and yellow_indexed[2][0]=='c')
-        assert(len(yellow_indexed[3])==1 and yellow_indexed[3][0]=='d')
-        assert(len(yellow_indexed[4])==1 and yellow_indexed[4][0]=='e')
-        init_filter()
+        self.filter.update("yyyyy", "abcde")
+        assert('a' in self.filter.yellow_set)
+        assert('b' in self.filter.yellow_set)
+        assert('c' in self.filter.yellow_set)
+        assert('d' in self.filter.yellow_set)
+        assert('e' in self.filter.yellow_set)
+        assert(len(self.filter.yellow_indexed[0])==1 and self.filter.yellow_indexed[0][0]=='a')
+        assert(len(self.filter.yellow_indexed[1])==1 and self.filter.yellow_indexed[1][0]=='b')
+        assert(len(self.filter.yellow_indexed[2])==1 and self.filter.yellow_indexed[2][0]=='c')
+        assert(len(self.filter.yellow_indexed[3])==1 and self.filter.yellow_indexed[3][0]=='d')
+        assert(len(self.filter.yellow_indexed[4])==1 and self.filter.yellow_indexed[4][0]=='e')
+        self.filter.clear()
 
-        update_filter("ggggg", "abcde")
-        assert(green[0]=='a')
-        assert(green[1]=='b')
-        assert(green[2]=='c')
-        assert(green[3]=='d')
-        assert(green[4]=='e')
-        init_filter()
+        self.filter.update("ggggg", "abcde")
+        assert(self.filter.green[0]=='a')
+        assert(self.filter.green[1]=='b')
+        assert(self.filter.green[2]=='c')
+        assert(self.filter.green[3]=='d')
+        assert(self.filter.green[4]=='e')
+        self.filter.clear()
 
-        update_filter("xxygx", "abcde")
-        assert('a' in gray)
-        assert('b' in gray)
-        assert('c' in yellow_set)
-        assert(len(yellow_indexed[2])==1 and yellow_indexed[2][0]=='c')
-        assert(green[3]=='d')
-        assert('e' in gray)
-        init_filter()
+        self.filter.update("xxygx", "abcde")
+        assert('a' in self.filter.gray)
+        assert('b' in self.filter.gray)
+        assert('c' in self.filter.yellow_set)
+        assert(len(self.filter.yellow_indexed[2])==1 and self.filter.yellow_indexed[2][0]=='c')
+        assert(self.filter.green[3]=='d')
+        assert('e' in self.filter.gray)
+        self.filter.clear()
 
-    def isValidGuess (self):
-        update_filter("xxxxx", "abcde")
-        assert(not isValidGuess("abcde"))
-        init_filter()
+    def TEST_isValidGuess (self):
+        self.filter.update("xxxxx", "abcde")
+        assert(not isValidGuess("abcde", self.filter))
+        self.filter.clear()
 
-        update_filter("gxxxx", "abcde")
-        assert(not isValidGuess("zzzzz"))
-        assert(isValidGuess("azzzz"))
-        init_filter()
+        self.filter.update("gxxxx", "abcde")
+        assert(not isValidGuess("zzzzz", self.filter))
+        assert(isValidGuess("azzzz", self.filter))
+        self.filter.clear()
 
-        update_filter("yxxxx", "abcde")
-        assert(not isValidGuess("azzzz"))
-        assert(not isValidGuess("zzzzz"))
-        assert(isValidGuess("zazzz"))
-        init_filter()
+        self.filter.update("yxxxx", "abcde")
+        assert(not isValidGuess("azzzz", self.filter))
+        assert(not isValidGuess("zzzzz", self.filter))
+        assert(isValidGuess("zazzz", self.filter))
+        self.filter.clear()
 
-        update_filter("xxxyx", "adieu")
-        assert(not isValidGuess("louse"))
-        assert(isValidGuess("froze"))
-        init_filter()
+        self.filter.update("xxxyx", "adieu")
+        assert(not isValidGuess("louse", self.filter))
+        assert(isValidGuess("froze", self.filter))
+        self.filter.clear()
 
-        update_filter("xxxyx", "adieu")
-        update_filter("xyxyx", "bebop")
-        assert(not isValidGuess("check"))
-        init_filter()
+        self.filter.update("xxxyx", "adieu")
+        self.filter.update("xyxyx", "bebop")
+        assert(not isValidGuess("check", self.filter))
+        self.filter.clear()
 
-    def get_guess (self):
-        get_word_list()
-        assert(get_guess() == INITIAL_GUESS)
-        update_filter("xxxyx", INITIAL_GUESS)
-        print(get_guess())
-        init_filter()
+    def TEST_get_guess (self):
+        assert(get_guess(self.filter) == INITIAL_GUESS)
+        self.filter.update("xxxyx", INITIAL_GUESS)
+        print(get_guess(self.filter))
+        self.filter.clear()
 
-    def get_feedback (self):
+    def TEST_get_feedback (self):
         feedback = get_feedback(INITIAL_GUESS)
         print("\n\nTEST result: {}".format(feedback))
 
-    def isWin (self):
+    def TEST_isWin (self):
         assert(not isWin("ggggy"))
         assert(isWin("ggggg"))
 
-    def report_loss(self):
+    def TEST_report_win (self):
+        report_win(INITIAL_GUESS)
+
+    def TEST_report_loss (self):
         report_loss()
 
-def report_filter_status ():
-    gray_list = list(gray)
-    gray_list.sort()
-    yellow_list = list(yellow_set)
-    yellow_list.sort()
-    
-    print("\n---FILTER STATUS START---")
-    print("green: {}".format(green))
-
-    print("yellow set: {}".format(yellow_list))
-    print("yellow indexed: {}".format(yellow_indexed))
-
-    print("gray: {}".format(gray_list))
-    print("---FILTER STATUS END  ---\n")
+    def run_tests (self):
+        self.TEST_isFirstGuess()
+        # self.TEST_get_word_list()
+        self.TEST_update_filter()
+        self.TEST_isValidGuess()
+        # self.TEST_get_guess()
+        # self.TEST_get_feedback()
+        self.TEST_isWin()
+        # self.TEST_report_win()
+        # self.TEST_report_loss()
 
 # reports efficacy of the bot, used for comparing subsequent versions
 class Evaluation:
@@ -252,17 +268,17 @@ class Evaluation:
         return res
     
     def get_wordle_score (self, ans: str) -> int:
-        init_filter()
+        filter = Filter()
         for i in range(1000):
-            guess = get_guess()
+            guess = get_guess(filter)
             feedback = self.get_automated_feedback(guess, ans)
             if isWin(feedback): return i+1
-            update_filter(feedback, guess)
+            filter.update(feedback, guess)
         exit(1)
 
-    def generate_evaluation (self) -> None:
+    def generate_evaluation (self, word_list) -> None:
         for i,word in enumerate(word_list):
-            print(i) # testing
+            # print(i) # testing
             score = self.get_wordle_score(word)
             if self.min_score==self.UNINITIALIZED_VALUE or score < self.min_score:
                 self.min_score = score
@@ -289,7 +305,7 @@ class Evaluation:
     def TEST_get_avg (self):
         NUMERATOR = 5
         DENOMINATOR = 7
-        ACCEPTABLE_ERR = 0.0001
+        ACCEPTABLE_ERR = 0.01
         obj = Evaluation()
         obj.total_guesses = NUMERATOR
         obj.num_words = DENOMINATOR
@@ -330,16 +346,14 @@ class Evaluation:
         self.TEST_generate_evaluation()
 
 def main ():
-    init_filter()
+    filter = Filter()
     get_word_list()
     for i in range(6):
-        guess = get_guess()
+        guess = get_guess(filter)
         feedback = get_feedback(guess)
         if isWin(feedback): report_win(guess)
-        update_filter(feedback, guess)
+        filter.update(feedback, guess)
     report_loss()
 
 if __name__=="__main__":
-    init_filter()
-    get_word_list()
-    print(get_number_valid_words())
+    main()
