@@ -3,7 +3,7 @@
 # version 2.0 - updating algo
 
 word_list = [] # from text file
-INITIAL_GUESS = "slate"
+INITIAL_GUESS = "adieu"
 
 class Filter ():
     def __init__ (self):
@@ -102,8 +102,7 @@ def get_guess (filter: Filter) -> str:
 
     exit(1)
 
-def get_number_valid_words () -> int:
-    filter = Filter()
+def get_number_valid_words (filter: Filter) -> int:
     res = 0
     for word in word_list:
         if isValidGuess(word, filter): res += 1
@@ -317,9 +316,9 @@ class Evaluation:
         assert(obj.get_automated_feedback(guess="abcde", ans="abcde") == "ggggg")
         assert(obj.get_automated_feedback(guess="abcde", ans="baecd") == "yyyyy")
         assert(obj.get_automated_feedback(guess="abcde", ans="aczzz") == "gxyxx")
+        assert(obj.get_automated_feedback(guess="carat", ans="party") == "xggxy")
     
     def TEST_get_wordle_score (self):
-        get_word_list()
         obj = Evaluation()
 
         # these tests only word for current iteration (version 1.0)
@@ -329,7 +328,6 @@ class Evaluation:
     def TEST_generate_evaluation (self):
         # won't work with generate_evaluation function that's released to prod
         # will only work with version 1.0
-        get_word_list() # main algorithm functions rely on this being generated, does not affect test
         TEST_WORD_LIST = ["whale", "zymic", "earth"]
         obj = Evaluation()
         obj.generate_evaluation(TEST_WORD_LIST)
@@ -356,4 +354,5 @@ def main ():
     report_loss()
 
 if __name__=="__main__":
-    main()
+    eval = Evaluation()
+    eval.run_tests()
