@@ -8,8 +8,8 @@ INITIAL_GUESS = "adieu"
 class Filter ():
     def __init__ (self):
         self.gray = set()
-        self.green = ['','','','','']
-        self.yellow_indexed = [[],[],[],[],[]]
+        self.green = ['']*5
+        self.yellow_indexed = [[]]*5
         self.yellow_set = set()
         assert(self.isEmpty())
 
@@ -69,21 +69,21 @@ def get_word_list ():
             word_list.append(word)
 
 def isValidGuess (guess: str, filter: Filter) -> bool:
-
     # green
-    for i, letter in enumerate(guess):
+    for i,letter in enumerate(guess):
         if filter.green[i] != '' and letter != filter.green[i]:
             return False
-        
+
     # gray
-    for letter in guess:
-        if letter in filter.gray: return False
+    for i,letter in enumerate(guess):
+        if letter in filter.gray and letter != filter.green[i]: 
+            return False
 
     # yellow set (guess must contain yellow letters)
     for yellow_letter in filter.yellow_set:
         isValid = False
-        for guess_letter in guess:
-            if yellow_letter == guess_letter:
+        for i,guess_letter in enumerate(guess):
+            if guess_letter == yellow_letter and guess_letter != filter.green[i]:
                 isValid = True
         if not isValid: return False
     
@@ -213,6 +213,21 @@ class Test ():
         assert(not isValidGuess("check", self.filter))
         self.filter.clear()
 
+        # green/gray duplicate test
+        self.filter.update("xggxy", "carat")
+        assert(isValidGuess("party", self.filter))
+        assert(not isValidGuess("aarty", self.filter))
+        self.filter.clear()
+
+        # green/yellow duplicate test
+        self.filter.update("yggyx", "aarty")
+        assert(isValidGuess("carat", self.filter))
+        assert(not isValidGuess("aarat", self.filter))
+        assert(not isValidGuess("aarxt", self.filter))
+        assert(not isValidGuess("carxt", self.filter))
+        self.filter.clear()
+
+
     def TEST_get_guess (self):
         assert(get_guess(self.filter) == INITIAL_GUESS)
         self.filter.update("xxxyx", INITIAL_GUESS)
@@ -258,8 +273,8 @@ class Evaluation:
         return round(self.total_guesses / self.num_words, 2)
     
     def get_automated_feedback (self, guess: str, ans: str) -> str:
-        UNINITIALIZED_FEEDBACK = ''
-        res_list = [UNINITIALIZED_FEEDBACK]*5
+        UNINITIALIZED_VALUE = ''
+        res_list = [UNINITIALIZED_VALUE]*5
         
         ans_map = {}
         for letter in ans:
@@ -276,7 +291,7 @@ class Evaluation:
 
         # yellow and gray letters
         for i,c in enumerate(guess):
-            if res_list[i] == UNINITIALIZED_FEEDBACK:
+            if res_list[i] == UNINITIALIZED_VALUE:
                 if c in ans_map and ans_map[c] > 0: 
                     res_list[i] = 'y'
                 else: 
@@ -334,8 +349,15 @@ class Evaluation:
         assert(obj.get_automated_feedback(guess="abcde", ans="abcde") == "ggggg")
         assert(obj.get_automated_feedback(guess="abcde", ans="baecd") == "yyyyy")
         assert(obj.get_automated_feedback(guess="abcde", ans="aczzz") == "gxyxx")
+
+        # green/gray duplicate
         assert(obj.get_automated_feedback(guess="carat", ans="party") == "xggxy")
         assert(obj.get_automated_feedback(guess="tarac", ans="ytrap") == "yxggx")
+
+        # green/yellow duplicate
+        assert(obj.get_automated_feedback(guess="aarty", ans="carat") == "yggyx")
+        assert(obj.get_automated_feedback(guess="ytraa", ans="tarac") == "xyggy")
+
 
     def TEST_get_wordle_score (self):
         obj = Evaluation()
@@ -374,4 +396,7 @@ def main ():
 
 if __name__=="__main__":
     eval = Evaluation()
-    eval.run_tests()
+    eval.TEST_get_automated_feedback()
+
+    test = Test()
+    test.TEST_isValidGuess()
