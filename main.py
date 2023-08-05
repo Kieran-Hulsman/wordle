@@ -258,13 +258,31 @@ class Evaluation:
         return round(self.total_guesses / self.num_words, 2)
     
     def get_automated_feedback (self, guess: str, ans: str) -> str:
-        res = ""
-        ans_set = set(ans)
+        UNINITIALIZED_FEEDBACK = ''
+        res_list = [UNINITIALIZED_FEEDBACK]*5
+        
+        ans_map = {}
+        for letter in ans:
+            if letter in ans_map:
+                ans_map[letter] += 1
+            else:
+                ans_map[letter] = 1
+
+        # green letters (fixes yellow/green bug)
         for i,c in enumerate(guess):
-            if c == ans[i]: res += 'g'
-            elif c in ans_set: res += 'y'
-            else: res += 'x'
-        return res
+            if c == ans[i]:
+                res_list[i] = 'g'
+                ans_map[c] -= 1
+
+        # yellow and gray letters
+        for i,c in enumerate(guess):
+            if res_list[i] == UNINITIALIZED_FEEDBACK:
+                if c in ans_map and ans_map[c] > 0: 
+                    res_list[i] = 'y'
+                else: 
+                    res_list[i] = 'x'
+        
+        return ''.join(res_list)
     
     def get_wordle_score (self, ans: str) -> int:
         filter = Filter()
@@ -317,7 +335,8 @@ class Evaluation:
         assert(obj.get_automated_feedback(guess="abcde", ans="baecd") == "yyyyy")
         assert(obj.get_automated_feedback(guess="abcde", ans="aczzz") == "gxyxx")
         assert(obj.get_automated_feedback(guess="carat", ans="party") == "xggxy")
-    
+        assert(obj.get_automated_feedback(guess="tarac", ans="ytrap") == "yxggx")
+
     def TEST_get_wordle_score (self):
         obj = Evaluation()
 
