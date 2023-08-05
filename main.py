@@ -3,7 +3,7 @@
 # version 2.0 - updating algo
 
 word_list = [] # from text file
-INITIAL_GUESS = "adieu"
+INITIAL_GUESS = "slate"
 
 class Filter ():
     def __init__ (self):
@@ -112,16 +112,41 @@ def isValidGuess (guess: str, filter: Filter) -> bool:
 # the algorithm
 def get_guess (filter: Filter) -> str:
     if isFirstGuess(filter): return INITIAL_GUESS
-    
+
+    UNINITALIZED_VALUE = ''
+    TOTAL_NUM_WORDS = 14855
+
+    res = UNINITALIZED_VALUE
+    min_words_remaning = TOTAL_NUM_WORDS
+
     for word in word_list:
-        if isValidGuess(word, filter): return word
+        if isValidGuess(word, filter):
+            predicted_words_remaining = get_predicted_words_remaining(word, filter)
 
-    exit(1)
+            if predicted_words_remaining < min_words_remaning:
+                res = word
+                min_words_remaning = predicted_words_remaining
+    
+    if res == UNINITALIZED_VALUE: assert(0)
+    return res
 
-def get_number_valid_words (filter: Filter) -> int:
+def get_words_remaining (filter: Filter) -> int:
     res = 0
     for word in word_list:
         if isValidGuess(word, filter): res += 1
+    return res
+
+def get_predicted_words_remaining (guess: str, filter: Filter) -> int:
+    filter.update(get_predicted_feedback(guess, filter), guess) # pass by value (copy)
+    return get_words_remaining(filter)
+
+# pre: guess is valid
+def get_predicted_feedback (guess: str, filter: Filter) -> str:
+    res = ""
+    for i,letter in enumerate(guess):
+        if letter == filter.green[i]: res += 'g'
+        elif letter in filter.yellow_set: res += 'y'
+        else: res += 'x'
     return res
 
 def get_feedback (guess: str) -> str:
@@ -139,7 +164,7 @@ def report_win (answer: str) -> None:
 def report_loss () -> None:
     print("sad sad. we lost :(")
 
-# testing
+# algo testing
 class Test ():
     def __init__ (self):
         self.filter = Filter()
@@ -190,6 +215,10 @@ class Test ():
         self.filter.clear()
 
     def TEST_isValidGuess (self):
+        assert(self.filter.isEmpty())
+        assert(isValidGuess(INITIAL_GUESS, self.filter))
+        self.filter.clear()
+
         self.filter.update("xxxxx", "abcde")
         assert(not isValidGuess("abcde", self.filter))
         self.filter.clear()
@@ -240,6 +269,23 @@ class Test ():
         feedback = get_feedback(INITIAL_GUESS)
         print("\n\nTEST result: {}".format(feedback))
 
+    # only works for version2.0
+    def TEST_get_predicted_feedback (self):
+        filter = Filter()
+
+        filter.update("xxxxx", "abcde")
+        assert(get_predicted_feedback("fghij", filter) == "xxxxx")
+        filter.clear()
+
+        filter.update("yxxxx", "abcde")
+        assert(get_predicted_feedback("zaaaa", filter) == "xyyyy")
+        assert(get_predicted_feedback("zafgh", filter) == "xyxxx")
+        filter.clear()
+
+        filter.update("xxxxg", "abcde")
+        assert(get_predicted_feedback("fghie", filter) == "xxxxg")
+        filter.clear()
+
     def TEST_isWin (self):
         assert(not isWin("ggggy"))
         assert(isWin("ggggg"))
@@ -256,6 +302,7 @@ class Test ():
         self.TEST_isValidGuess()
         # self.TEST_get_guess()
         # self.TEST_get_feedback()
+        self.TEST_get_predicted_feedback()
         self.TEST_isWin()
         # self.TEST_report_win()
         # self.TEST_report_loss()
@@ -396,11 +443,4 @@ def main ():
     report_loss()
 
 if __name__=="__main__":
-    eval = Evaluation()
-    eval.TEST_get_automated_feedback()
-
-    test = Test()
-    test.TEST_isValidGuess()
-
-    filter = Filter()
-    filter.TEST_isEmpty()
+    main()
