@@ -56,6 +56,21 @@ class Filter ():
                 green_isEmpty = False
         
         return green_isEmpty
+    
+    def TEST_isEmpty (self):
+        obj = Filter()
+        assert(obj.isEmpty())
+        
+        obj.gray.add('a')
+        assert(not obj.isEmpty())
+        obj.clear()
+
+        obj.green[4] = 'a'
+        assert(not obj.isEmpty())
+        obj.clear()
+
+        obj.yellow_set.add('a')
+        assert(not obj.isEmpty())
 
 def isFirstGuess (filter: Filter) -> bool:
     return filter.isEmpty()
@@ -94,6 +109,7 @@ def isValidGuess (guess: str, filter: Filter) -> bool:
   
     return True
 
+# the algorithm
 def get_guess (filter: Filter) -> str:
     if isFirstGuess(filter): return INITIAL_GUESS
     
@@ -128,20 +144,6 @@ class Test ():
     def __init__ (self):
         self.filter = Filter()
         get_word_list()
-
-    def TEST_isFirstGuess (self):
-        assert(isFirstGuess(self.filter))
-        
-        self.filter.gray.add('a')
-        assert(not isFirstGuess(self.filter))
-        self.filter.clear()
-
-        self.filter.green[4] = 'a'
-        assert(not isFirstGuess(self.filter))
-        self.filter.clear()
-
-        self.filter.yellow_set.add('a')
-        assert(not isFirstGuess(self.filter))
 
     def TEST_get_word_list (self):
         for word in word_list:
@@ -249,7 +251,6 @@ class Test ():
         report_loss()
 
     def run_tests (self):
-        self.TEST_isFirstGuess()
         # self.TEST_get_word_list()
         self.TEST_update_filter()
         self.TEST_isValidGuess()
@@ -400,3 +401,6 @@ if __name__=="__main__":
 
     test = Test()
     test.TEST_isValidGuess()
+
+    filter = Filter()
+    filter.TEST_isEmpty()
