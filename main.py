@@ -1,6 +1,7 @@
 # kieran hulsman
 # wordle solver
 # version 2.0 - updating algo
+import copy
 
 word_list = [] # from text file
 INITIAL_GUESS = "slate"
@@ -8,10 +9,26 @@ INITIAL_GUESS = "slate"
 class Filter ():
     def __init__ (self):
         self.gray = set()
-        self.green = ['']*5
-        self.yellow_indexed = [[]]*5
+        self.green = ['', '', '', '', '']
+        self.yellow_indexed = [[], [], [], [], []]
         self.yellow_set = set()
         assert(self.isEmpty())
+
+    # python is pass by reference so need to make copy ctor *facepalm*
+    def copy (self):
+        new_filter = Filter()
+        new_filter.gray = self.gray.deepcopy()
+        new_filter.green = self.green.deepcopy()
+        new_filter.yellow_indexed = self.yellow_indexed.deepcopy()
+        new_filter.yellow_set = self.yellow_set.deepcopy()
+
+        assert(id(new_filter.gray) != id(self.gray))
+        assert(id(new_filter.green) != id(self.green))
+        assert(id(new_filter.yellow_indexed) != id(self.yellow_indexed))
+        assert(id(new_filter.yellow_set) != id(self.yellow_set))
+
+        return new_filter
+
 
     def update (self, feedback: str, guess: str) -> None:
         for i,c in enumerate(feedback):
@@ -41,8 +58,8 @@ class Filter ():
     # resets filter
     def clear (self) -> None:
         self.gray = set()
-        self.green = ['','','','','']
-        self.yellow_indexed = [[],[],[],[],[]]
+        self.green = ['', '', '', '', '']
+        self.yellow_indexed = [[], [], [], [], []]
         self.yellow_set = set()
         assert(self.isEmpty())
 
@@ -137,8 +154,9 @@ def get_words_remaining (filter: Filter) -> int:
     return res
 
 def get_predicted_words_remaining (guess: str, filter: Filter) -> int:
-    filter.update(get_predicted_feedback(guess, filter), guess) # pass by value (copy)
-    return get_words_remaining(filter)
+    temp_filter = filter.copy()
+    temp_filter.update(get_predicted_feedback(guess, temp_filter), guess)
+    return get_words_remaining(temp_filter)
 
 # pre: guess is valid
 def get_predicted_feedback (guess: str, filter: Filter) -> str:
@@ -356,9 +374,10 @@ class Evaluation:
             filter.update(feedback, guess)
         exit(1)
 
+    # param word_list: used to test on smaller data set
     def generate_evaluation (self, word_list) -> None:
         for i,word in enumerate(word_list):
-            # print(i) # testing
+            print(i) # testing
             score = self.get_wordle_score(word)
             if self.min_score==self.UNINITIALIZED_VALUE or score < self.min_score:
                 self.min_score = score
@@ -408,11 +427,12 @@ class Evaluation:
 
 
     def TEST_get_wordle_score (self):
+        # only works with version 1.0
         obj = Evaluation()
 
         # these tests only word for current iteration (version 1.0)
-        assert(obj.get_wordle_score("zymic") == 6)
-        assert(obj.get_wordle_score("whale") == 6)
+        # assert(obj.get_wordle_score("zymic") == 6)
+        # assert(obj.get_wordle_score("whale") == 6)
     
     def TEST_generate_evaluation (self):
         # won't work with generate_evaluation function that's released to prod
@@ -420,9 +440,13 @@ class Evaluation:
         TEST_WORD_LIST = ["whale", "zymic", "earth"]
         obj = Evaluation()
         obj.generate_evaluation(TEST_WORD_LIST)
-        assert(obj.min_score == 5)
-        assert(obj.max_score == 6)
-        assert(obj.total_guesses == 6 + 6 + 5)
+        print("min score: {}".format(obj.min_score))
+        print("max score: {}".format(obj.max_score))
+
+        # assert(obj.min_score == 5)
+        # assert(obj.max_score == 6)
+        # assert(obj.total_guesses == 6 + 6 + 5)
+        
         assert(obj.num_words == len(TEST_WORD_LIST))
 
     def run_tests (self):
@@ -443,4 +467,7 @@ def main ():
     report_loss()
 
 if __name__=="__main__":
-    main()
+    eval = Evaluation()
+    eval.run_tests()
+    # eval.generate_evaluation(word_list)
+    # eval.report_evaluation()
