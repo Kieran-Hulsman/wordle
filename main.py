@@ -159,10 +159,10 @@ def get_guess (filter: Filter) -> str:
     if isFirstGuess(filter): return INITIAL_GUESS
 
     UNINITALIZED_VALUE = ''
-    TOTAL_NUM_WORDS = 14855
+    cur_words_remaining = get_words_remaining(filter)
 
     res = UNINITALIZED_VALUE
-    min_words_remaning = TOTAL_NUM_WORDS
+    min_words_remaning = cur_words_remaining
 
     for word in word_list:
         if isValidGuess(word, filter):
@@ -171,7 +171,11 @@ def get_guess (filter: Filter) -> str:
             if predicted_words_remaining < min_words_remaning:
                 res = word
                 min_words_remaning = predicted_words_remaining
-    
+            
+            # trying to prevent stalling out (less theoretically optimized)
+            if predicted_words_remaining < (cur_words_remaining / 2):
+                return res
+
     if res == UNINITALIZED_VALUE: assert(0)
     return res
 
@@ -361,7 +365,7 @@ class Evaluation:
     def get_wordle_score (self, ans: str) -> int:
         filter = Filter()
         for i in range(1000):
-            print("ans: {} --- i: {}".format(ans,i))
+            # print("ans: {} --- i: {}".format(ans,i)) # testing
             guess = get_guess(filter)
             feedback = self.get_automated_feedback(guess, ans)
             if isWin(feedback): return i+1
@@ -371,7 +375,8 @@ class Evaluation:
     # param word_list: used to test on smaller data set
     def generate_evaluation (self, word_list) -> None:
         for i,word in enumerate(word_list):
-            print("\n\n\n----------{}----------".format(word)) # testing
+            # print("\n\n\n----------{}----------".format(word)) # testing
+            print("{}: {}".format(i, word)) # testing
             score = self.get_wordle_score(word)
             if self.min_score==self.UNINITIALIZED_VALUE or score < self.min_score:
                 self.min_score = score
@@ -461,7 +466,4 @@ def main ():
     report_loss()
 
 if __name__=="__main__":
-    eval = Evaluation()
-    eval.run_tests()
-    # eval.generate_evaluation(word_list)
-    # eval.report_evaluation()
+    main()
