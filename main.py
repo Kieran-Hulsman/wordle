@@ -17,12 +17,16 @@ class Filter ():
     def update (self, feedback: str, guess: str) -> None:
         for i,c in enumerate(feedback):
             if c == 'x': self.gray.add(guess[i])
-            elif c == 'g': self.green[i] = guess[i]
-            elif c == 'y':
+            elif c == 'g': 
+                self.green[i] = guess[i]
+                self.yellow_set.discard(guess[i]) # won't do anything if c isn't a member of yellow_set
+        
+        # need to add yellows after gray and green to differentiate between a green after a yellow
+        # in sequential guesses vs. in the same guess
+        for i,c in enumerate(feedback):
+            if c == 'y':
                 self.yellow_set.add(guess[i])
                 self.yellow_indexed[i].append(guess[i])
-            else:
-                exit(1)
 
     def report_status (self) -> None:
         gray_list = list(self.gray)
@@ -260,6 +264,7 @@ class Test ():
         assert(not isValidGuess("carxt", self.filter))
         self.filter.clear()
 
+        # yellow turned green bug
         self.filter.update("xygxg", "slate")
         self.filter.update("xxggg", "veale")
         assert(isValidGuess("whale", self.filter))
