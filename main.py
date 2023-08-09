@@ -357,9 +357,11 @@ class Evaluation:
         
         return ''.join(res_list)
     
+    # auto-plays the game
     def get_wordle_score (self, ans: str) -> int:
         filter = Filter()
         for i in range(1000):
+            print("ans: {} --- i: {}".format(ans,i))
             guess = get_guess(filter)
             feedback = self.get_automated_feedback(guess, ans)
             if isWin(feedback): return i+1
@@ -369,7 +371,7 @@ class Evaluation:
     # param word_list: used to test on smaller data set
     def generate_evaluation (self, word_list) -> None:
         for i,word in enumerate(word_list):
-            print(i) # testing
+            print("\n\n\n----------{}----------".format(word)) # testing
             score = self.get_wordle_score(word)
             if self.min_score==self.UNINITIALIZED_VALUE or score < self.min_score:
                 self.min_score = score
@@ -459,9 +461,7 @@ def main ():
     report_loss()
 
 if __name__=="__main__":
-    test = Test()
-    test.TEST_isValidGuess()
-    # eval = Evaluation()
-    # eval.run_tests()
+    eval = Evaluation()
+    eval.run_tests()
     # eval.generate_evaluation(word_list)
     # eval.report_evaluation()
