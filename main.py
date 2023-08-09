@@ -335,6 +335,4 @@ def main ():
     report_loss()
 
 if __name__=="__main__":
-    eval = Evaluation()
-    eval.generate_evaluation()
-    eval.report_evaluation()
+    main()
