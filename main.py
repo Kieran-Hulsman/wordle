@@ -14,17 +14,6 @@ class Filter ():
         self.yellow_set = set()
         assert(self.isEmpty())
 
-    # python is pass by reference so need to make copy ctor *facepalm*
-    def copy (self):
-        new_filter = Filter()
-        new_filter.gray = copy.deepcopy(self.gray)
-        new_filter.green = copy.deepcopy(self.green)
-        new_filter.yellow_indexed = copy.deepcopy(self.yellow_indexed)
-        new_filter.yellow_set = copy.deepcopy(self.yellow_set)
-
-        return new_filter
-
-
     def update (self, feedback: str, guess: str) -> None:
         for i,c in enumerate(feedback):
             if c == 'x': self.gray.add(guess[i])
@@ -84,13 +73,45 @@ class Filter ():
         obj.yellow_set.add('a')
         assert(not obj.isEmpty())
 
-    def TEST_copy (self):
-        new_filter = self.copy()
-        assert(id(new_filter.gray) != id(self.gray))
-        assert(id(new_filter.green) != id(self.green))
-        assert(id(new_filter.yellow_indexed) != id(self.yellow_indexed))
-        assert(id(new_filter.yellow_set) != id(self.yellow_set))
+    def TEST_update (self):
 
+        self.update("xxxxx", "abcde")
+        assert('a' in self.gray)
+        assert('b' in self.gray)
+        assert('c' in self.gray)
+        assert('d' in self.gray)
+        assert('e' in self.gray)
+        self.clear()
+
+        self.update("yyyyy", "abcde")
+        assert('a' in self.yellow_set)
+        assert('b' in self.yellow_set)
+        assert('c' in self.yellow_set)
+        assert('d' in self.yellow_set)
+        assert('e' in self.yellow_set)
+        assert(len(self.yellow_indexed[0])==1 and self.yellow_indexed[0][0]=='a')
+        assert(len(self.yellow_indexed[1])==1 and self.yellow_indexed[1][0]=='b')
+        assert(len(self.yellow_indexed[2])==1 and self.yellow_indexed[2][0]=='c')
+        assert(len(self.yellow_indexed[3])==1 and self.yellow_indexed[3][0]=='d')
+        assert(len(self.yellow_indexed[4])==1 and self.yellow_indexed[4][0]=='e')
+        self.clear()
+
+        self.update("ggggg", "abcde")
+        assert(self.green[0]=='a')
+        assert(self.green[1]=='b')
+        assert(self.green[2]=='c')
+        assert(self.green[3]=='d')
+        assert(self.green[4]=='e')
+        self.clear()
+
+        self.update("xxygx", "abcde")
+        assert('a' in self.gray)
+        assert('b' in self.gray)
+        assert('c' in self.yellow_set)
+        assert(len(self.yellow_indexed[2])==1 and self.yellow_indexed[2][0]=='c')
+        assert(self.green[3]=='d')
+        assert('e' in self.gray)
+        self.clear()
 
 def isFirstGuess (filter: Filter) -> bool:
     return filter.isEmpty()
@@ -157,7 +178,7 @@ def get_words_remaining (filter: Filter) -> int:
     return res
 
 def get_predicted_words_remaining (guess: str, filter: Filter) -> int:
-    temp_filter = filter.copy()
+    temp_filter = copy.deepcopy(filter)
     temp_filter.update(get_predicted_feedback(guess, temp_filter), guess)
     return get_words_remaining(temp_filter)
 
@@ -194,47 +215,7 @@ class Test ():
     def TEST_get_word_list (self):
         for word in word_list:
             print(word)
-
-    def TEST_update_filter (self):
-
-        self.filter.update("xxxxx", "abcde")
-        assert('a' in self.filter.gray)
-        assert('b' in self.filter.gray)
-        assert('c' in self.filter.gray)
-        assert('d' in self.filter.gray)
-        assert('e' in self.filter.gray)
-        self.filter.clear()
-
-        self.filter.update("yyyyy", "abcde")
-        assert('a' in self.filter.yellow_set)
-        assert('b' in self.filter.yellow_set)
-        assert('c' in self.filter.yellow_set)
-        assert('d' in self.filter.yellow_set)
-        assert('e' in self.filter.yellow_set)
-        assert(len(self.filter.yellow_indexed[0])==1 and self.filter.yellow_indexed[0][0]=='a')
-        assert(len(self.filter.yellow_indexed[1])==1 and self.filter.yellow_indexed[1][0]=='b')
-        assert(len(self.filter.yellow_indexed[2])==1 and self.filter.yellow_indexed[2][0]=='c')
-        assert(len(self.filter.yellow_indexed[3])==1 and self.filter.yellow_indexed[3][0]=='d')
-        assert(len(self.filter.yellow_indexed[4])==1 and self.filter.yellow_indexed[4][0]=='e')
-        self.filter.clear()
-
-        self.filter.update("ggggg", "abcde")
-        assert(self.filter.green[0]=='a')
-        assert(self.filter.green[1]=='b')
-        assert(self.filter.green[2]=='c')
-        assert(self.filter.green[3]=='d')
-        assert(self.filter.green[4]=='e')
-        self.filter.clear()
-
-        self.filter.update("xxygx", "abcde")
-        assert('a' in self.filter.gray)
-        assert('b' in self.filter.gray)
-        assert('c' in self.filter.yellow_set)
-        assert(len(self.filter.yellow_indexed[2])==1 and self.filter.yellow_indexed[2][0]=='c')
-        assert(self.filter.green[3]=='d')
-        assert('e' in self.filter.gray)
-        self.filter.clear()
-
+    
     def TEST_isValidGuess (self):
         assert(self.filter.isEmpty())
         assert(isValidGuess(INITIAL_GUESS, self.filter))
@@ -279,6 +260,10 @@ class Test ():
         assert(not isValidGuess("carxt", self.filter))
         self.filter.clear()
 
+        self.filter.update("xygxg", "slate")
+        self.filter.update("xxggg", "veale")
+        assert(isValidGuess("whale", self.filter))
+        self.filter.clear()
 
     def TEST_get_guess (self):
         assert(get_guess(self.filter) == INITIAL_GUESS)
@@ -319,7 +304,6 @@ class Test ():
 
     def run_tests (self):
         # self.TEST_get_word_list()
-        self.TEST_update_filter()
         self.TEST_isValidGuess()
         # self.TEST_get_guess()
         # self.TEST_get_feedback()
@@ -470,8 +454,8 @@ def main ():
     report_loss()
 
 if __name__=="__main__":
-    filter = Filter()
-    filter.TEST_copy()
+    test = Test()
+    test.TEST_isValidGuess()
     # eval = Evaluation()
     # eval.run_tests()
     # eval.generate_evaluation(word_list)
