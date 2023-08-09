@@ -17,15 +17,10 @@ class Filter ():
     # python is pass by reference so need to make copy ctor *facepalm*
     def copy (self):
         new_filter = Filter()
-        new_filter.gray = self.gray.deepcopy()
-        new_filter.green = self.green.deepcopy()
-        new_filter.yellow_indexed = self.yellow_indexed.deepcopy()
-        new_filter.yellow_set = self.yellow_set.deepcopy()
-
-        assert(id(new_filter.gray) != id(self.gray))
-        assert(id(new_filter.green) != id(self.green))
-        assert(id(new_filter.yellow_indexed) != id(self.yellow_indexed))
-        assert(id(new_filter.yellow_set) != id(self.yellow_set))
+        new_filter.gray = copy.deepcopy(self.gray)
+        new_filter.green = copy.deepcopy(self.green)
+        new_filter.yellow_indexed = copy.deepcopy(self.yellow_indexed)
+        new_filter.yellow_set = copy.deepcopy(self.yellow_set)
 
         return new_filter
 
@@ -88,6 +83,14 @@ class Filter ():
 
         obj.yellow_set.add('a')
         assert(not obj.isEmpty())
+
+    def TEST_copy (self):
+        new_filter = self.copy()
+        assert(id(new_filter.gray) != id(self.gray))
+        assert(id(new_filter.green) != id(self.green))
+        assert(id(new_filter.yellow_indexed) != id(self.yellow_indexed))
+        assert(id(new_filter.yellow_set) != id(self.yellow_set))
+
 
 def isFirstGuess (filter: Filter) -> bool:
     return filter.isEmpty()
@@ -467,7 +470,9 @@ def main ():
     report_loss()
 
 if __name__=="__main__":
-    eval = Evaluation()
-    eval.run_tests()
+    filter = Filter()
+    filter.TEST_copy()
+    # eval = Evaluation()
+    # eval.run_tests()
     # eval.generate_evaluation(word_list)
     # eval.report_evaluation()
