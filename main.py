@@ -1,10 +1,11 @@
 # kieran hulsman
 # wordle solver
-# version 2.0 - updating algo
+# version 3.0 - re-ordering words (imitation game)
 import copy
 
 word_list = [] # from text file
 INITIAL_GUESS = "slate"
+VERSION = "3.0" # used for eval report
 
 class Filter ():
     def __init__ (self):
@@ -123,10 +124,11 @@ def isFirstGuess (filter: Filter) -> bool:
 def get_word_list ():
     global word_list
 
-    file = open("valid-wordle-words.txt", "r")
+    file = open("sorting/freq-sorted-words.txt", "r")
     for line in file:
         for word in line.split():
             word_list.append(word)
+    file.close()
 
 def isValidGuess (guess: str, filter: Filter) -> bool:
     # green
@@ -372,11 +374,21 @@ class Evaluation:
             filter.update(feedback, guess)
         exit(1)
 
+    def get_prev_answers () -> list:
+        file = open("prev-wordle-answers/answers.txt", "r")
+        res = []
+        for line in file:
+            for word in line.split():
+                res.append(word)
+        file.close()
+        return res
+
     # param word_list: used to test on smaller data set
-    def generate_evaluation (self, word_list) -> None:
+    def generate_evaluation (self, word_list=get_prev_answers()) -> None:
         for i,word in enumerate(word_list):
-            # print("\n\n\n----------{}----------".format(word)) # testing
+            
             print("{}: {}".format(i, word)) # testing
+
             score = self.get_wordle_score(word)
             if self.min_score==self.UNINITIALIZED_VALUE or score < self.min_score:
                 self.min_score = score
@@ -384,14 +396,17 @@ class Evaluation:
                 self.max_score = score
             self.total_guesses += score
             self.num_words += 1
-    
+
+    # pre: eval is generated
     def report_evaluation (self) -> None:
-        # eval must be generated in order for this function to work
-        print("---WORDLE BOT VERSION EVALUATION REPORT---")
-        print("min score: {}".format(self.min_score))
-        print("max score: {}".format(self.max_score))
-        print("avg score: {}".format(self.get_avg()))
-        print("---WORDLE BOT VERSION EVALUATION REPORT---")
+        file = open("evaluation-report.txt", "w")
+        file.write(
+            "version: {}\n\n"
+            "min score: {}\n"
+            "max score: {}\n"
+            "avg score: {}\n"
+            .format(VERSION, self.min_score, self.max_score, self.get_avg())
+        )
 
     def TEST_init (self):
         obj = Evaluation()
@@ -434,14 +449,13 @@ class Evaluation:
         # assert(obj.get_wordle_score("whale") == 6)
     
     def TEST_generate_evaluation (self):
-        # won't work with generate_evaluation function that's released to prod
-        # will only work with version 1.0
         TEST_WORD_LIST = ["whale", "zymic", "earth"]
         obj = Evaluation()
         obj.generate_evaluation(TEST_WORD_LIST)
         print("min score: {}".format(obj.min_score))
         print("max score: {}".format(obj.max_score))
 
+        # will only work with version 1.0
         # assert(obj.min_score == 5)
         # assert(obj.max_score == 6)
         # assert(obj.total_guesses == 6 + 6 + 5)

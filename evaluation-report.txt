@@ -1,5 +1,5 @@
-version 2.0
+version: 3.0
 
 min score: 1
-max score: 17
-avg score: 5.07
+max score: 10
+avg score: 3.98
